@@ -1,0 +1,31 @@
+name: 🐛 Bug
+description: Signaler un comportement inattendu ou une erreur
+title: "fix: <description courte>"
+labels: [bug]
+body:
+  - type: textarea
+    id: steps
+    attributes:
+      label: Étapes pour reproduire
+      placeholder: |
+        1. ...
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Comportement attendu
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Comportement observé
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs, capture d’écran, contexte
+      placeholder: Coller ici tout log utile
