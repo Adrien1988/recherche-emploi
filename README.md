@@ -16,7 +16,7 @@ Consulte la vision produit complète pour comprendre le « pourquoi » et les ob
 
 ## Statut
 
-Projet en développement : dépôts, CI et fondations sont en place (voir `docs/DoD.md`). Les premières fonctionnalités arrivent bientôt.
+Projet en développement : dépôts, CI et fondations sont en place : [Definition of Done](./docs/DoD.md). Les premières fonctionnalités arrivent bientôt.
 
 ## Licence
 
