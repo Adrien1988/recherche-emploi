@@ -34,6 +34,9 @@ body:
         - 3
         - 5
         - 8
+        - 13
+        - 21
+        - 34
   - type: dropdown
     id: priority
     attributes:
