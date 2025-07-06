@@ -41,7 +41,6 @@ yarn-error.log*
 # ------------------------------------------------------------------------------
 docker-compose.override.yml
 .docker/
-.env
 .env.local
 *.pid
 *.log
