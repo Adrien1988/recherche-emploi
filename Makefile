@@ -1,13 +1,11 @@
-.PHONY: up down lint test
+.PHONY: up down logs
 
 up:
-	docker compose up -d
+	@if [ ! -f .env ]; then cp .env.dist .env; fi
+	docker compose up -d --build
 
 down:
-	docker compose down
+	docker compose down -v
 
-lint:
-	@echo "🔧  lint placeholder – sera implémenté en F-003"
-
-test:
-	@echo "🧪  test placeholder – sera implémenté en F-003"
+logs:
+	docker compose logs -f --tail=100
