@@ -1,7 +1,10 @@
 # ------------------------------------------------------------------------------
 #  Symfony / PHP
 # ------------------------------------------------------------------------------
-/vendor/
+/app/.env
+/app/.env.dev
+/app/.env.test
+/app/vendor/
 composer.phar
 # Cache & logs v2 / v3
 /app/cache/*
@@ -41,7 +44,7 @@ yarn-error.log*
 # ------------------------------------------------------------------------------
 docker-compose.override.yml
 .docker/
-.env.local
+.env.dist
 *.pid
 *.log
 *.sqlite
@@ -53,3 +56,4 @@ docker-compose.override.yml
 # ------------------------------------------------------------------------------
 .DS_Store
 Thumbs.db
+/app/.env

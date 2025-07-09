@@ -3,14 +3,13 @@
 # -----------------------------------------------------------------------------
 FROM php:8.3-fpm-alpine
 
-# ----------------------------------------------------------------------------- 
-# 1. Paquets système + dépendances de compilation
-#    - git, unzip           : outils courants
-#    - icu-data-full        : toutes les locales ICU (utile pour intl)
-#    - .build-deps (virtual): paquets *-dev* nécessaires seulement le temps
-#      de compiler les extensions → on les supprimera ensuite pour alléger.
 # -----------------------------------------------------------------------------
-RUN apk add --no-cache git unzip icu-data-full \
+# 1. Paquets système et dépendances
+#    • git, unzip            : outils courants
+#    • icu-data-full + icu-libs : locales et runtime pour l’extension intl
+#    • .build-deps (virtual) : paquets *-dev* nécessaires le temps de compiler
+# -----------------------------------------------------------------------------
+RUN apk add --no-cache git unzip icu-data-full icu-libs \
  && apk add --no-cache --virtual .build-deps icu-dev
 
 # -----------------------------------------------------------------------------
@@ -18,7 +17,7 @@ RUN apk add --no-cache git unzip icu-data-full \
 # -----------------------------------------------------------------------------
 RUN docker-php-ext-install pdo_mysql intl opcache
 
-# On retire les dépendances de build pour réduire la taille finale
+# Supprime uniquement les paquets de build, conserve icu-libs pour l’exécution
 RUN apk del .build-deps
 
 # -----------------------------------------------------------------------------

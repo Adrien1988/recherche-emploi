@@ -3,9 +3,8 @@ services:
     build: ./docker/php
     volumes:
       - .:/var/www
-    environment:
-      APP_ENV: ${APP_ENV}
-      APP_SECRET: ${APP_SECRET}
+    env_file:
+      - .env
     depends_on:
       - mysql
 
@@ -15,17 +14,14 @@ services:
       - .:/var/www
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     ports:
-      - "8000:80"        # publier sur 8000 pour éviter le port 80 de Laragon
+      - "8000:80"
     depends_on:
       - php
 
   mysql:
     image: mysql:8.4
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    env_file:
+      - .env
     ports:
       - "3306:3306"
     volumes:
