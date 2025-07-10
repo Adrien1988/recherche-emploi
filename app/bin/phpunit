@@ -1,0 +1,9 @@
+#!/usr/bin/env php
+<?php
+// Redirige vers simple-phpunit en forçant APP_ENV=test
+$_SERVER['APP_ENV']  = $_ENV['APP_ENV'] = 'test';
+$_SERVER['APP_DEBUG'] = $_ENV['APP_DEBUG'] = '1';
+array_shift($argv);                 // retire le nom du script
+array_unshift($argv, __DIR__.'/../vendor/bin/simple-phpunit');
+passthru(implode(' ', array_map('escapeshellarg', $argv)), $exit);
+exit($exit);
