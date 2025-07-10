@@ -9,3 +9,7 @@ down:
 
 logs:
 	docker compose logs -f --tail=100
+
+test:
+	docker compose exec -e APP_ENV=test -w /var/www/app \
+		php vendor/bin/simple-phpunit -v
