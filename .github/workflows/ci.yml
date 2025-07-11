@@ -1,22 +1,52 @@
-name: CI (placeholder)
+name: CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
 
 jobs:
   lint:
+    name: PHPStan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - run: echo "lint OK ✅"
+      - uses: actions/checkout@v4
+
+      - name: Build containers
+        run: docker compose build --pull --progress plain
+
+      - name: Install dev dependencies
+        run: docker compose run --rm --workdir /var/www/App php composer install -n --prefer-dist
+
+      - name: Run PHPStan
+        run: docker compose run --rm --workdir /var/www/App php vendor/bin/phpstan analyse --level max
 
   test:
+    name: PHPUnit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - run: echo "tests OK ✅"
+      - uses: actions/checkout@v4
+
+      - name: Build containers
+        run: docker compose build --pull --progress plain
+
+      - name: Run unit tests
+        run: docker compose run --rm -e APP_ENV=test --workdir /var/www/App php bin/simple-phpunit --testdox
+
 
   build:
+    name: Build Production
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - run: echo "build OK ✅"
+      - uses: actions/checkout@v4
+
+      - name: Build containers
+        run: docker compose build --pull --progress plain
+
+      - name: Install prod dependencies
+        run: docker compose run --rm --workdir /var/www/App php composer install -n --no-dev --prefer-dist
+
+      - name: Run build script
+        run: docker compose run --rm --workdir /var/www/App php ./scripts/build.sh
+
