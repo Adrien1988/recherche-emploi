@@ -1,4 +1,5 @@
-Voici un contenu prêt à copier‐coller dans ton `README.md` :
+[![CI](https://github.com/Adrien1988/recherche-emploi/actions/workflows/ci.yml/badge.svg)](https://github.com/Adrien1988/recherche-emploi/actions/workflows/ci.yml)
+
 
 # Recherche d’emploi – Suivi, relances et rapports en un seul outil
 
