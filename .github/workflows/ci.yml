@@ -16,9 +16,9 @@ jobs:
       - name: Build containers
         run: docker compose build --pull --progress plain
 
-      # 👉 exécution EN ROOT (pas de --user) : écrit dans /etc/gitconfig
+      # --global, exécuté EN ROOT (pas de --user) : écrit dans /root/.gitconfig
       - name: Mark /var/www as safe for Git
-        run: docker compose run --rm --workdir /var/www/app php git config --system --add safe.directory /var/www
+        run: docker compose run --rm --workdir /var/www/app php git config --global --add safe.directory /var/www
 
       - name: Install dev dependencies
         run: docker compose run --rm --user $(id -u):$(id -g) --workdir /var/www/app php composer install -n --prefer-dist
@@ -35,9 +35,8 @@ jobs:
       - name: Build containers
         run: docker compose build --pull --progress plain
 
-      # 👉 reste en root pour la config Git
       - name: Mark /var/www as safe for Git
-        run: docker compose run --rm --workdir /var/www/app php git config --system --add safe.directory /var/www
+        run: docker compose run --rm --workdir /var/www/app php git config --global --add safe.directory /var/www
 
       - name: Run unit tests
         run: docker compose run --rm --user $(id -u):$(id -g) -e APP_ENV=test --workdir /var/www/app php bin/simple-phpunit --testdox
@@ -51,9 +50,8 @@ jobs:
       - name: Build containers
         run: docker compose build --pull --progress plain
 
-      # 👉 config Git en root
       - name: Mark /var/www as safe for Git
-        run: docker compose run --rm --workdir /var/www/app php git config --system --add safe.directory /var/www
+        run: docker compose run --rm --workdir /var/www/app php git.config --global --add safe.directory /var/www
 
       - name: Install prod dependencies
         run: docker compose run --rm --user $(id -u):$(id -g) --workdir /var/www/app php composer install -n --no-dev --prefer-dist
