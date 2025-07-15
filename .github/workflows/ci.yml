@@ -16,11 +16,6 @@ jobs:
       - name: Build containers
         run: docker compose build --pull --progress plain
 
-      # Marque /var/www comme répertoire Git sûr (root)
-      - name: Git safe.directory
-        run: docker compose run --rm --workdir /var/www/app php \
-             git config --global --add safe.directory /var/www
-
       - name: Install dev dependencies
         run: docker compose run --rm --user $(id -u):$(id -g) \
              --workdir /var/www/app php \
@@ -40,10 +35,6 @@ jobs:
       - name: Build containers
         run: docker compose build --pull --progress plain
 
-      - name: Git safe.directory
-        run: docker compose run --rm --workdir /var/www/app php \
-             git config --global --add safe.directory /var/www
-
       - name: Run unit tests
         run: docker compose run --rm --user $(id -u):$(id -g) \
              -e APP_ENV=test --workdir /var/www/app php \
@@ -57,10 +48,6 @@ jobs:
 
       - name: Build containers
         run: docker compose build --pull --progress plain
-
-      - name: Git safe.directory
-        run: docker compose run --rm --workdir /var/www/app php \
-             git config --global --add safe.directory /var/www
 
       - name: Install prod dependencies
         run: docker compose run --rm --user $(id -u):$(id -g) \
