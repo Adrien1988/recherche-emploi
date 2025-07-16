@@ -15,7 +15,7 @@ env:
 
   # Options Composer
   COMPOSER_FLAGS_DEV:  "-n --prefer-dist --no-scripts"
-  COMPOSER_FLAGS_PROD: "-n --no-dev --prefer-dist --no-scripts"
+  # COMPOSER_FLAGS_PROD: "-n --no-dev --prefer-dist --no-scripts"
   COMPOSER_ALLOW_SUPERUSER: "1"   # autorise Composer à tourner en root
 
 ###############################################################################
@@ -85,33 +85,33 @@ jobs:
 ###############################################################################
 # 3) Build production
 ###############################################################################
-  build:
-    needs: [lint, test]           # n’exécute le build qu’après succès des deux jobs
-    runs-on: ubuntu-latest
+  # build:
+  #   needs: [lint, test]           # n’exécute le build qu’après succès des deux jobs
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Build Docker images
-        run: docker compose build --pull --progress plain
+  #     - name: Build Docker images
+  #       run: docker compose build --pull --progress plain
 
-      - name: Install Composer dependencies (prod)
-        run: |
-          docker compose run --rm \
-            --user 0:0 \
-            --workdir $WORKDIR \
-            php sh -lc "
-              git config --global --add safe.directory /var/www &&
-              composer install $COMPOSER_FLAGS_PROD
-            "
+  #     - name: Install Composer dependencies (prod)
+  #       run: |
+  #         docker compose run --rm \
+  #           --user 0:0 \
+  #           --workdir $WORKDIR \
+  #           php sh -lc "
+  #             git config --global --add safe.directory /var/www &&
+  #             composer install $COMPOSER_FLAGS_PROD
+  #           "
 
-      - name: Build project assets
-        run: |
-          docker compose run --rm \
-            --user 0:0 \
-            --workdir $WORKDIR \
-            php sh -lc '
-              git config --global --add safe.directory /var/www &&
-              chmod +x /var/www/scripts/build.sh &&
-              /var/www/scripts/build.sh
-            '
+  #     - name: Build project assets
+  #       run: |
+  #         docker compose run --rm \
+  #           --user 0:0 \
+  #           --workdir $WORKDIR \
+  #           php sh -lc '
+  #             git config --global --add safe.directory /var/www &&
+  #             chmod +x /var/www/scripts/build.sh &&
+  #             /var/www/scripts/build.sh
+  #           '
