@@ -1,22 +1,117 @@
-name: CI (placeholder)
+name: CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**'] 
 
+###############################################################################
+# Variables d’environnement communes
+###############################################################################
+env:
+  # Chemin du code à l’intérieur des conteneurs
+  WORKDIR: "/var/www/app"
+
+  # Options Composer
+  COMPOSER_FLAGS_DEV:  "-n --prefer-dist --no-scripts"
+  # COMPOSER_FLAGS_PROD: "-n --no-dev --prefer-dist --no-scripts"
+  COMPOSER_ALLOW_SUPERUSER: "1"   # autorise Composer à tourner en root
+
+###############################################################################
+# 1) Analyse statique – PHPStan
+###############################################################################
 jobs:
   lint:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - run: echo "lint OK ✅"
 
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker images
+        run: docker compose build --pull --progress plain
+
+      - name: Install Composer dependencies (dev)
+        run: |
+          docker compose run --rm \
+            --user 0:0 \
+            --workdir $WORKDIR \
+            -e COMPOSER_ALLOW_SUPERUSER \
+            php sh -lc "
+              git config --global --add safe.directory /var/www &&
+              composer install $COMPOSER_FLAGS_DEV
+            "
+
+      - name: Run PHPStan
+        run: |
+          docker compose run --rm \
+            --workdir $WORKDIR \
+            php vendor/bin/phpstan analyse --level max
+
+###############################################################################
+# 2) Tests unitaires – PHPUnit
+###############################################################################
   test:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - run: echo "tests OK ✅"
 
-  build:
-    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - run: echo "build OK ✅"
+      - uses: actions/checkout@v4
+
+      - name: Build Docker images
+        run: docker compose build --pull --progress plain
+
+      - name: Install Composer dependencies (dev)
+        run: |
+          docker compose run --rm \
+            --user 0:0 \
+            --workdir $WORKDIR \
+            -e COMPOSER_ALLOW_SUPERUSER \
+            php sh -lc "
+              git config --global --add safe.directory /var/www &&
+              composer install $COMPOSER_FLAGS_DEV
+            "
+
+      - name: Run PHPUnit
+        run: |
+          docker compose run --rm \
+          --user 0:0 \
+            --workdir $WORKDIR \
+            -e APP_ENV=test \
+            php sh -lc '
+              git config --global --add safe.directory /var/www &&
+              php vendor/bin/simple-phpunit --testdox
+            '
+
+###############################################################################
+# 3) Build production
+###############################################################################
+  # build:
+  #   needs: [lint, test]           # n’exécute le build qu’après succès des deux jobs
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #     - uses: actions/checkout@v4
+
+  #     - name: Build Docker images
+  #       run: docker compose build --pull --progress plain
+
+  #     - name: Install Composer dependencies (prod)
+  #       run: |
+  #         docker compose run --rm \
+  #           --user 0:0 \
+  #           --workdir $WORKDIR \
+  #           php sh -lc "
+  #             git config --global --add safe.directory /var/www &&
+  #             composer install $COMPOSER_FLAGS_PROD
+  #           "
+
+  #     - name: Build project assets
+  #       run: |
+  #         docker compose run --rm \
+  #           --user 0:0 \
+  #           --workdir $WORKDIR \
+  #           php sh -lc '
+  #             git config --global --add safe.directory /var/www &&
+  #             chmod +x /var/www/scripts/build.sh &&
+  #             /var/www/scripts/build.sh
+  #           '
