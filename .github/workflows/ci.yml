@@ -11,7 +11,7 @@ on:
 ###############################################################################
 env:
   # Chemin du code à l’intérieur des conteneurs
-  WORKDIR: "/var/www"
+  WORKDIR: "/var/www/app"
 
   # Options Composer
   COMPOSER_FLAGS_DEV:  "-n --prefer-dist --no-scripts"
@@ -112,6 +112,6 @@ jobs:
             --workdir $WORKDIR \
             php sh -lc '
               git config --global --add safe.directory /var/www &&
-              chmod +x ./scripts/build.sh &&
-              ./scripts/build.sh
+              chmod +x /var/www/scripts/build.sh &&
+              /var/www/scripts/build.sh
             '
