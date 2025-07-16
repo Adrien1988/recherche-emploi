@@ -6,65 +6,103 @@ on:
   pull_request:
     branches: ['**']
 
+# ───────────────────────────────────────────────────────────────
+#  Variables communes : on fixe HOME pour Git et Composer
+# ───────────────────────────────────────────────────────────────
+env:
+  HOME: /root
+  COMPOSER_CACHE_DIR: /tmp/composer-cache
+
+# ───────────────────────────────────────────────────────────────
+#  JOB 1 – Lint (PHPStan)
+# ───────────────────────────────────────────────────────────────
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build images
-        run: docker compose build --pull --progress plain
+      # Build des containers applicatifs
+      - run: docker compose build --pull --progress plain
 
-      - name: Mark repo as safe
-        run: docker compose run --rm php git config --system --add safe.directory /var/www
-
-      - name: Install deps (dev) – no scripts
+      # Déclare le repo comme “safe” pour Git à l’intérieur du conteneur
+      - name: Allow container Git to work on /var/www
         run: |
           docker compose run --rm \
+            -e HOME=$HOME \
+            php git config --global --add safe.directory /var/www
+
+      # Installation des dépendances (sans scripts)
+      - name: Composer install (dev)
+        run: |
+          docker compose run --rm \
+            -e HOME=$HOME \
             --workdir /var/www/app \
             php composer install -n --prefer-dist --no-scripts
 
-      - name: PHPStan
+      # Exécution de PHPStan
+      - name: PHPStan analyse
         run: |
           docker compose run --rm \
+            -e HOME=$HOME \
             --workdir /var/www/app \
             php vendor/bin/phpstan analyse --level max
 
+# ───────────────────────────────────────────────────────────────
+#  JOB 2 – Tests unitaires
+# ───────────────────────────────────────────────────────────────
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - run: docker compose build --pull --progress plain
-      - run: docker compose run --rm php git config --system --add safe.directory /var/www
 
-      - name: Install deps (dev) – no scripts
+      - name: Allow container Git to work on /var/www
         run: |
           docker compose run --rm \
+            -e HOME=$HOME \
+            php git config --global --add safe.directory /var/www
+
+      - name: Composer install (dev)
+        run: |
+          docker compose run --rm \
+            -e HOME=$HOME \
             --workdir /var/www/app \
             php composer install -n --prefer-dist --no-scripts
 
       - name: PHPUnit
         run: |
           docker compose run --rm \
+            -e HOME=$HOME \
             -e APP_ENV=test \
             --workdir /var/www/app \
             php bin/phpunit --testdox
 
+# ───────────────────────────────────────────────────────────────
+#  JOB 3 – Build prod
+# ───────────────────────────────────────────────────────────────
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - run: docker compose build --pull --progress plain
-      - run: docker compose run --rm php git config --system --add safe.directory /var/www
 
-      - name: Install deps (prod)
+      - name: Allow container Git to work on /var/www
         run: |
           docker compose run --rm \
+            -e HOME=$HOME \
+            php git config --global --add safe.directory /var/www
+
+      - name: Composer install (prod)
+        run: |
+          docker compose run --rm \
+            -e HOME=$HOME \
             --workdir /var/www/app \
             php composer install -n --no-dev --prefer-dist --no-scripts
 
       - name: Build script
         run: |
           docker compose run --rm \
+            -e HOME=$HOME \
             --workdir /var/www/app \
             php ./scripts/build.sh
