@@ -11,7 +11,7 @@ on:
 ###############################################################################
 env:
   # Chemin du code à l’intérieur des conteneurs
-  WORKDIR: "/var/www/app"
+  WORKDIR: "/var/www"
 
   # Options Composer
   COMPOSER_FLAGS_DEV:  "-n --prefer-dist --no-scripts"
