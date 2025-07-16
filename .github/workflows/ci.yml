@@ -8,60 +8,63 @@ on:
 
 jobs:
   lint:
-    name: PHPStan
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - run: docker compose build --pull --progress plain
+      - name: Build images
+        run: docker compose build --pull --progress plain
 
-      - run: |
+      - name: Mark repo as safe
+        run: docker compose run --rm php git config --system --add safe.directory /var/www
+
+      - name: Install deps (dev) – no scripts
+        run: |
           docker compose run --rm \
-            --user $(id -u):$(id -g) \
             --workdir /var/www/app \
             php composer install -n --prefer-dist --no-scripts
 
-      - run: |
+      - name: PHPStan
+        run: |
           docker compose run --rm \
-            --user $(id -u):$(id -g) \
             --workdir /var/www/app \
             php vendor/bin/phpstan analyse --level max
 
   test:
-    name: PHPUnit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - run: docker compose build --pull --progress plain
+      - run: docker compose run --rm php git config --system --add safe.directory /var/www
 
-      - run: |
+      - name: Install deps (dev) – no scripts
+        run: |
           docker compose run --rm \
             --workdir /var/www/app \
             php composer install -n --prefer-dist --no-scripts
 
-      - run: |
+      - name: PHPUnit
+        run: |
           docker compose run --rm \
             -e APP_ENV=test \
             --workdir /var/www/app \
             php bin/phpunit --testdox
 
   build:
-    name: Build Production
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - run: docker compose build --pull --progress plain
+      - run: docker compose run --rm php git config --system --add safe.directory /var/www
 
-      - run: |
+      - name: Install deps (prod)
+        run: |
           docker compose run --rm \
-            --user $(id -u):$(id -g) \
             --workdir /var/www/app \
             php composer install -n --no-dev --prefer-dist --no-scripts
 
-      - run: |
+      - name: Build script
+        run: |
           docker compose run --rm \
-            --user $(id -u):$(id -g) \
             --workdir /var/www/app \
             php ./scripts/build.sh
