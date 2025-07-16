@@ -34,8 +34,9 @@ jobs:
       - name: Install Composer dependencies (dev)
         run: |
           docker compose run --rm \
-            --user 0:0 \                                 # exécution en root
+            --user 0:0 \
             --workdir $WORKDIR \
+            -e COMPOSER_ALLOW_SUPERUSER \
             php sh -lc "
               git config --global --add safe.directory /var/www &&
               composer install $COMPOSER_FLAGS_DEV
@@ -44,7 +45,6 @@ jobs:
       - name: Run PHPStan
         run: |
           docker compose run --rm \
-            --user 0:0 \
             --workdir $WORKDIR \
             php vendor/bin/phpstan analyse --level max
 
