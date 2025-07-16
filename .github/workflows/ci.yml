@@ -28,15 +28,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: docker compose build --pull --progress plain
-      - run: |
+      # 1) Installation des dépendances PHP
+      - name: Composer install (no-scripts)
+        run: |
           docker compose run --rm \
-            --workdir /var/www/app \
-            php composer install -n --prefer-dist --no-scripts
-      - run: |
+            --user $(id -u):$(id -g) \
+            --workdir /var/www \
+            php sh -lc '
+              git config --global --add safe.directory /var/www &&
+              composer install -n --prefer-dist --no-scripts
+            '
+
+    # 2) Exécution de la suite de tests
+      - name: PHPUnit
+        run: |
           docker compose run --rm \
+            --user $(id -u):$(id -g) \
             -e APP_ENV=test \
-            --workdir /var/www/app \
-            php bin/phpunit --testdox
+            --workdir /var/www \
+            php vendor/bin/phpunit --testdox
 
   build:
     runs-on: ubuntu-latest
