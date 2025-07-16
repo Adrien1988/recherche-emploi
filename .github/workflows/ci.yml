@@ -110,4 +110,8 @@ jobs:
           docker compose run --rm \
             --user 0:0 \
             --workdir $WORKDIR \
-            php ./scripts/build.sh
+            php sh -lc '
+              git config --global --add safe.directory $WORKDIR &&
+              chmod +x ./scripts/build.sh &&
+              ./scripts/build.sh
+            '
