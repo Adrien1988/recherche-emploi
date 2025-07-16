@@ -74,9 +74,13 @@ jobs:
       - name: Run PHPUnit
         run: |
           docker compose run --rm \
+          --user 0:0 \
             --workdir $WORKDIR \
             -e APP_ENV=test \
-            php php vendor/bin/simple-phpunit --testdox
+            php sh -lc '
+              git config --global --add safe.directory /var/www &&
+              php vendor/bin/simple-phpunit --testdox
+            '
 
 ###############################################################################
 # 3) Build production
