@@ -105,13 +105,13 @@ jobs:
               composer install $COMPOSER_FLAGS_PROD
             "
 
-      - name: Run build script
+      - name: Build project assets
         run: |
           docker compose run --rm \
             --user 0:0 \
             --workdir $WORKDIR \
             php sh -lc '
-              git config --global --add safe.directory $WORKDIR &&
+              git config --global --add safe.directory /var/www &&
               chmod +x ./scripts/build.sh &&
               ./scripts/build.sh
             '
