@@ -39,7 +39,7 @@ jobs:
           docker compose run --rm \
             -e APP_ENV=test \
             --workdir /var/www/app \
-            php bin/phpunit --testdox
+            php sh -c "chmod +x bin/phpunit && bin/phpunit --testdox"
 
   build:
     name: Build Production
