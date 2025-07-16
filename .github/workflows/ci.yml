@@ -13,18 +13,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build containers
-        run: docker compose build --pull --progress plain
+      - run: docker compose build --pull --progress plain
 
-      - name: Install dev dependencies
-        run: docker compose run --rm --user $(id -u):$(id -g) \
-             --workdir /var/www/app php \
-             composer install -n --prefer-dist --no-scripts
+      - run: |
+          docker compose run --rm \
+            --user $(id -u):$(id -g) \
+            --workdir /var/www/app \
+            php composer install -n --prefer-dist --no-scripts
 
-      - name: Run PHPStan
-        run: docker compose run --rm --user $(id -u):$(id -g) \
-             --workdir /var/www/app php \
-             vendor/bin/phpstan analyse --level max
+      - run: |
+          docker compose run --rm \
+            --user $(id -u):$(id -g) \
+            --workdir /var/www/app \
+            php vendor/bin/phpstan analyse --level max
 
   test:
     name: PHPUnit
@@ -32,13 +33,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build containers
-        run: docker compose build --pull --progress plain
+      - run: docker compose build --pull --progress plain
 
-      - name: Run unit tests
-        run: docker compose run --rm --user $(id -u):$(id -g) \
-             -e APP_ENV=test --workdir /var/www/app php \
-             bin/simple-phpunit --testdox
+      - run: |
+          docker compose run --rm \
+            --user $(id -u):$(id -g) \
+            -e APP_ENV=test \
+            --workdir /var/www/app \
+            php bin/simple-phpunit --testdox
 
   build:
     name: Build Production
@@ -46,15 +48,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build containers
-        run: docker compose build --pull --progress plain
+      - run: docker compose build --pull --progress plain
 
-      - name: Install prod dependencies
-        run: docker compose run --rm --user $(id -u):$(id -g) \
-             --workdir /var/www/app php \
-             composer install -n --no-dev --prefer-dist --no-scripts
+      - run: |
+          docker compose run --rm \
+            --user $(id -u):$(id -g) \
+            --workdir /var/www/app \
+            php composer install -n --no-dev --prefer-dist --no-scripts
 
-      - name: Run build script
-        run: docker compose run --rm --user $(id -u):$(id -g) \
-             --workdir /var/www/app php \
-             ./scripts/build.sh
+      - run: |
+          docker compose run --rm \
+            --user $(id -u):$(id -g) \
+            --workdir /var/www/app \
+            php ./scripts/build.sh
