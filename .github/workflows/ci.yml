@@ -37,9 +37,14 @@ jobs:
 
       - run: |
           docker compose run --rm \
+            --workdir /var/www/app \
+            php composer install -n --prefer-dist --no-scripts
+
+      - run: |
+          docker compose run --rm \
             -e APP_ENV=test \
             --workdir /var/www/app \
-            php php bin/phpunit --testdox
+            php bin/phpunit --testdox
 
   build:
     name: Build Production
