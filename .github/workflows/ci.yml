@@ -1,65 +1,99 @@
-# .github/workflows/ci.yml
 name: CI
+
 on:
   push:
-    branches: ["**"]
+    branches: ['**']
   pull_request:
-    branches: ["**"]
+    branches: ['**']
 
+# ---------------------------------------------------------------------------
+# Variables / réutilisables
+# ---------------------------------------------------------------------------
+env:
+  COMPOSER_FLAGS_DEV:   "-n --prefer-dist --no-scripts"
+  COMPOSER_FLAGS_PROD:  "-n --no-dev --prefer-dist --no-scripts"
+  WORKDIR:              "/var/www"          # = racine du dépôt dans le conteneur
+
+# ---------------------------------------------------------------------------
+# 1) Analyse statique PHPStan
+# ---------------------------------------------------------------------------
 jobs:
   lint:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
-      - run: docker compose build --pull --progress plain
-      - run: |
+
+      - name: Build Docker images
+        run: docker compose build --pull --progress plain
+
+      - name: Install Composer dependencies
+        run: |
           docker compose run --rm \
-            --user $(id -u):$(id -g) \
-            --workdir /var/www/app \
-            php composer install -n --prefer-dist --no-scripts
-      - run: |
+            --workdir ${{ env.WORKDIR }} \
+            php sh -lc "
+              git config --global --add safe.directory ${{ env.WORKDIR }} &&
+              composer install $COMPOSER_FLAGS_DEV
+            "
+
+      - name: Run PHPStan
+        run: |
           docker compose run --rm \
-            --user $(id -u):$(id -g) \
-            --workdir /var/www/app \
+            --workdir ${{ env.WORKDIR }} \
             php vendor/bin/phpstan analyse --level max
 
+# ---------------------------------------------------------------------------
+# 2) Tests unitaires PHPUnit
+# ---------------------------------------------------------------------------
   test:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
-      - run: docker compose build --pull --progress plain
-      # 1) Installation des dépendances PHP
-      - name: Composer install (no-scripts)
-        run: |
-          docker compose run --rm \
-            --user $(id -u):$(id -g) \
-            --workdir /var/www \
-            php sh -lc '
-              git config --global --add safe.directory /var/www &&
-              composer install -n --prefer-dist --no-scripts
-            '
 
-    # 2) Exécution de la suite de tests
-      - name: PHPUnit
+      - name: Build Docker images
+        run: docker compose build --pull --progress plain
+
+      - name: Install Composer dependencies (dev)
         run: |
           docker compose run --rm \
-            --user $(id -u):$(id -g) \
+            --workdir ${{ env.WORKDIR }} \
+            php sh -lc "
+              git config --global --add safe.directory ${{ env.WORKDIR }} &&
+              composer install $COMPOSER_FLAGS_DEV
+            "
+
+      - name: Run PHPUnit
+        run: |
+          docker compose run --rm \
+            --workdir ${{ env.WORKDIR }} \
             -e APP_ENV=test \
-            --workdir /var/www \
-            php vendor/bin/phpunit --testdox
+            php bin/phpunit --testdox
 
+# ---------------------------------------------------------------------------
+# 3) Build production (assets, etc.)
+# ---------------------------------------------------------------------------
   build:
     runs-on: ubuntu-latest
+    needs: [lint, test]
+
     steps:
       - uses: actions/checkout@v4
-      - run: docker compose build --pull --progress plain
-      - run: |
+
+      - name: Build Docker images
+        run: docker compose build --pull --progress plain
+
+      - name: Install Composer dependencies (prod)
+        run: |
           docker compose run --rm \
-            --user $(id -u):$(id -g) \
-            --workdir /var/www/app \
-            php composer install -n --no-dev --prefer-dist --no-scripts
-      - run: |
+            --workdir ${{ env.WORKDIR }} \
+            php sh -lc "
+              git config --global --add safe.directory ${{ env.WORKDIR }} &&
+              composer install $COMPOSER_FLAGS_PROD
+            "
+
+      - name: Run build script
+        run: |
           docker compose run --rm \
-            --user $(id -u):$(id -g) \
-            --workdir /var/www/app \
+            --workdir ${{ env.WORKDIR }} \
             php ./scripts/build.sh
