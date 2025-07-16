@@ -12,7 +12,7 @@ on:
 env:
   COMPOSER_FLAGS_DEV:   "-n --prefer-dist --no-scripts"
   COMPOSER_FLAGS_PROD:  "-n --no-dev --prefer-dist --no-scripts"
-  WORKDIR:              "/var/www"          # = racine du dépôt dans le conteneur
+  WORKDIR:              "/var/www/app"          # = racine du dépôt dans le conteneur
 
 # ---------------------------------------------------------------------------
 # 1) Analyse statique PHPStan
