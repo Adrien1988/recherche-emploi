@@ -43,7 +43,7 @@ jobs:
           COMPOSER_FLAGS_DEV: ${{ env.COMPOSER_FLAGS_DEV }}
           COMPOSER_ALLOW_SUPERUSER: ${{ env.COMPOSER_ALLOW_SUPERUSER }}
         run: |
-          docker compose run --rm --no-deps \
+          docker compose run --rm --no-deps --entrypoint "" \
             --user 0:0 \
             --workdir "$WORKDIR" \
             -e COMPOSER_ALLOW_SUPERUSER="$COMPOSER_ALLOW_SUPERUSER" \
@@ -54,9 +54,9 @@ jobs:
 
       - name: Run PHPStan
         run: |
-          docker compose run --rm --no-deps \
+          docker compose run --rm --no-deps --entrypoint "" \
             --workdir "$WORKDIR" \
-            php vendor/bin/phpstan analyse --level max
+            php sh -lc "vendor/bin/phpstan analyse --level max"
 
   test:
     runs-on: ubuntu-latest
@@ -89,7 +89,7 @@ jobs:
           COMPOSER_FLAGS_DEV: ${{ env.COMPOSER_FLAGS_DEV }}
           COMPOSER_ALLOW_SUPERUSER: ${{ env.COMPOSER_ALLOW_SUPERUSER }}
         run: |
-          docker compose run --rm --no-deps \
+          docker compose run --rm --no-deps --entrypoint "" \
             --user 0:0 \
             --workdir "$WORKDIR" \
             -e COMPOSER_ALLOW_SUPERUSER="$COMPOSER_ALLOW_SUPERUSER" \
@@ -102,7 +102,7 @@ jobs:
         env:
           WORKDIR: ${{ env.WORKDIR }}
         run: |
-          docker compose run --rm --no-deps \
+          docker compose run --rm --no-deps --entrypoint "" \
             --user 0:0 \
             --workdir "$WORKDIR" \
             -e APP_ENV=test \

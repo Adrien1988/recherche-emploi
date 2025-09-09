@@ -18,6 +18,23 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www
 COPY . /var/www
 
+# 4.1 Assurer la présence d'un entrypoint et ses permissions (sans heredoc)
+RUN set -eux; \
+    if [ -f /var/www/docker/php/entrypoint.sh ]; then \
+      :; \
+    else \
+      mkdir -p /var/www/docker/php; \
+      printf '%s\n' \
+        '#!/usr/bin/env sh' \
+        'set -e' \
+        'composer install --no-interaction --prefer-dist --no-progress --ansi' \
+        'php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration' \
+        'exec php-fpm' \
+        > /var/www/docker/php/entrypoint.sh; \
+    fi; \
+    sed -i "s/\r$//" /var/www/docker/php/entrypoint.sh; \
+    chmod +x /var/www/docker/php/entrypoint.sh
+
 # 5. Dossier de travail Symfony
 WORKDIR /var/www/app
 
