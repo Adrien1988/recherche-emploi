@@ -14,18 +14,18 @@ Consulte la vision produit complète pour comprendre le « pourquoi » et les ob
 
 ---
 
-## Démarrage rapide (stack Docker Compose)
+## Démarrage rapide (Docker Compose)
 
-> Prérequis : Docker 24 + GNU Make installés sur votre machine (Docker Desktop + WSL 2 sous Windows 11).
+> Prérequis : Docker ≥ 24 + GNU Make (ex. Docker Desktop + WSL 2 sous Windows 11).
 
 Copiez-collez **l’intégralité** du bloc ci-dessous dans votre terminal – tout sera prêt en une seule exécution :
 
-# 1· Cloner le dépôt et entrer dans le dossier
+# 1· Cloner le dépôt
 ```bash
-git clone https://github.com/<organisation>/recherche-emploi.git
+git clone https://github.com/Adrien1988/recherche-emploi.git
 cd recherche-emploi
 ```
-# 2· Copier les variables d'environnement par défaut (à faire une seule fois)
+# 2· Copier les variables d'environnement (local)
 ```bash
 cp .env.dist .env
 ```
@@ -38,6 +38,52 @@ make up
 #    (la page d’accueil Symfony affichera HTTP 200 dès que le code sera installé)
 xdg-open http://localhost:8000 2>/dev/null || open http://localhost:8000 || start http://localhost:8000
 
+## Base de données & migrations
+
+# 1· Démarrer (auto-migration)
+```bash
+make up
+```
+Le conteneur php exécute automatiquement : 
+composer install
+php bin/console doctrine:migrations:migrate --no-interaction
+
+# 2· Vérifier que la migration a tourné
+```bash
+docker compose logs php | grep -E "Migrating|Successfully migrated"
+```
+
+# 3· Lancer manuellement (optionnel)
+```bash
+docker compose exec php php bin/console doctrine:migrations:migrate --no-interaction
+```
+
+# 4· Accéder à phpMyAdmin (dev)
+- URL : http://localhost:8080
+
+- Identifiants : ceux de votre .env (ex. app / ******)
+
+- Base : app
+
+# 5· Réinitialiser complètement la BDD (dev)
+```bash
+make db-reset
+```
+Cette commande exécute un docker compose down -v puis relance la stack ; l’entrypoint rejoue les migrations et recrée les tables (user, doctrine_migration_versions, …).
+
+## Commandes utiles (Makefile)
+up:         # build & start (copie .env.dist -> .env s'il manque)
+down:       # stop & remove volumes (-v)
+logs:       # logs suivis (--tail=100)
+test:       # lance la suite de tests (APP_ENV=test)
+db-reset:   # reset complet de la base puis relance
+
+Exemples : 
+
+make logs
+make down
+make test
+
 
 ## Exécution des tests
 
@@ -47,7 +93,9 @@ supplémentaire n’est nécessaire.
 
 ```bash
 # Lancer l’ensemble de la suite
-make test      # alias de : APP_ENV=test docker compose exec -w /var/www/app php vendor/bin/simple-phpunit -v
+docker compose exec -e APP_ENV=test -w /var/www/app php vendor/bin/simple-phpunit -v
+# ou simplement
+make test
 ```
 
 ## Statut
@@ -57,4 +105,3 @@ Projet en développement : dépôts, CI et fondations sont en place : [Definitio
 ## Licence
 
 Code sous licence MIT – voir `LICENSE` pour les détails.
-
