@@ -34,7 +34,7 @@ jobs:
           PMA_HOST=mysql
           PMA_PORT=3306
 
-          DATABASE_URL="mysql://app:app@mysql:3306/app?serverVersion=8.4&charset=utf8mb4"
+          DATABASE_URL="mysql://app:app@mysql:3306/app?serverVersion=8.4.5&charset=utf8mb4"
           EOF
           cp .env.dist .env
 
@@ -83,7 +83,7 @@ jobs:
           PMA_HOST=mysql
           PMA_PORT=3306
 
-          DATABASE_URL="mysql://app:app@mysql:3306/app?serverVersion=8.4&charset=utf8mb4"
+          DATABASE_URL="mysql://app:app@mysql:3306/app?serverVersion=8.4.5&charset=utf8mb4"
           EOF
           cp .env.dist .env
 
@@ -104,9 +104,11 @@ jobs:
       - name: Run PHPUnit
         env:
           WORKDIR: ${{ env.WORKDIR }}
+          SYMFONY_DEPRECATIONS_HELPER: weak
         run: |
           docker compose run --rm --no-deps --entrypoint "" \
             --user 0:0 \
             --workdir "$WORKDIR" \
             -e APP_ENV=test \
+            -e SYMFONY_DEPRECATIONS_HELPER="$SYMFONY_DEPRECATIONS_HELPER" \
             php sh -lc "git config --global --add safe.directory /var/www && php vendor/bin/simple-phpunit --testdox"
