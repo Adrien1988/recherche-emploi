@@ -13,3 +13,7 @@ logs:
 test:
 	docker compose exec -e APP_ENV=test -w /var/www/app \
 		php vendor/bin/simple-phpunit -v
+
+db-reset:
+	docker compose down -v
+	docker compose up -d

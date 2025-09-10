@@ -1,3 +1,7 @@
+includes:
+    - vendor/phpstan/phpstan-doctrine/extension.neon
+    - vendor/phpstan/phpstan-doctrine/rules.neon
+
 parameters:
     level: 6
     paths:
@@ -6,3 +10,7 @@ parameters:
         - public/
         - src/
         - tests/
+    # (optionnel) évite d'analyser var/ et vendor/
+    excludePaths:
+        - %currentWorkingDirectory%/var/*
+        - %currentWorkingDirectory%/vendor/*

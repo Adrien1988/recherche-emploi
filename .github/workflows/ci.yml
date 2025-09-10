@@ -4,114 +4,111 @@ on:
   push:
     branches: ['**']
   pull_request:
-    branches: ['**'] 
+    branches: ['**']
 
-###############################################################################
-# Variables d’environnement communes
-###############################################################################
 env:
-  # Chemin du code à l’intérieur des conteneurs
   WORKDIR: "/var/www/app"
+  COMPOSER_ALLOW_SUPERUSER: "1"
 
-  # Options Composer
-  COMPOSER_FLAGS_DEV:  "-n --prefer-dist --no-scripts"
-  # COMPOSER_FLAGS_PROD: "-n --no-dev --prefer-dist --no-scripts"
-  COMPOSER_ALLOW_SUPERUSER: "1"   # autorise Composer à tourner en root
-
-###############################################################################
-# 1) Analyse statique – PHPStan
-###############################################################################
 jobs:
+  #############################################################################
+  # 1) Analyse statique – PHPStan
+  #############################################################################
   lint:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
+
+      # Fournir les fichiers d'env attendus par docker-compose
+      - name: Prepare env for CI (.env.dist + .env)
+        run: |
+          cat > .env.dist <<'EOF'
+          MYSQL_ROOT_PASSWORD=root
+          MYSQL_USER=app
+          MYSQL_PASSWORD=app
+          MYSQL_DATABASE=app
+
+          APP_ENV=dev
+          APP_DEBUG=0
+          MAILER_DSN=null://localhost
+          PMA_HOST=mysql
+          PMA_PORT=3306
+
+          DATABASE_URL="mysql://app:app@mysql:3306/app?serverVersion=8.4.5&charset=utf8mb4"
+          EOF
+          cp .env.dist .env
 
       - name: Build Docker images
         run: docker compose build --pull --progress plain
 
       - name: Install Composer dependencies (dev)
+        env:
+          WORKDIR: ${{ env.WORKDIR }}
+          COMPOSER_ALLOW_SUPERUSER: ${{ env.COMPOSER_ALLOW_SUPERUSER }}
         run: |
-          docker compose run --rm \
+          docker compose run --rm --no-deps --entrypoint "" \
             --user 0:0 \
-            --workdir $WORKDIR \
-            -e COMPOSER_ALLOW_SUPERUSER \
-            php sh -lc "
-              git config --global --add safe.directory /var/www &&
-              composer install $COMPOSER_FLAGS_DEV
-            "
+            --workdir "$WORKDIR" \
+            -e COMPOSER_ALLOW_SUPERUSER="$COMPOSER_ALLOW_SUPERUSER" \
+            php sh -lc "git config --global --add safe.directory /var/www && composer install -n --prefer-dist --no-scripts"
 
       - name: Run PHPStan
+        env:
+          WORKDIR: ${{ env.WORKDIR }}
         run: |
-          docker compose run --rm \
-            --workdir $WORKDIR \
-            php vendor/bin/phpstan analyse --level max
+          docker compose run --rm --no-deps --entrypoint "" \
+            --workdir "$WORKDIR" \
+            php sh -lc "vendor/bin/phpstan analyse --level max"
 
-###############################################################################
-# 2) Tests unitaires – PHPUnit
-###############################################################################
+  #############################################################################
+  # 2) Tests unitaires – PHPUnit
+  #############################################################################
   test:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
+
+      # Même préparation mais APP_ENV=test
+      - name: Prepare env for CI (.env.dist + .env)
+        run: |
+          cat > .env.dist <<'EOF'
+          MYSQL_ROOT_PASSWORD=root
+          MYSQL_USER=app
+          MYSQL_PASSWORD=app
+          MYSQL_DATABASE=app
+
+          APP_ENV=test
+          APP_DEBUG=0
+          MAILER_DSN=null://localhost
+          PMA_HOST=mysql
+          PMA_PORT=3306
+
+          DATABASE_URL="mysql://app:app@mysql:3306/app?serverVersion=8.4.5&charset=utf8mb4"
+          EOF
+          cp .env.dist .env
 
       - name: Build Docker images
         run: docker compose build --pull --progress plain
 
       - name: Install Composer dependencies (dev)
+        env:
+          WORKDIR: ${{ env.WORKDIR }}
+          COMPOSER_ALLOW_SUPERUSER: ${{ env.COMPOSER_ALLOW_SUPERUSER }}
         run: |
-          docker compose run --rm \
+          docker compose run --rm --no-deps --entrypoint "" \
             --user 0:0 \
-            --workdir $WORKDIR \
-            -e COMPOSER_ALLOW_SUPERUSER \
-            php sh -lc "
-              git config --global --add safe.directory /var/www &&
-              composer install $COMPOSER_FLAGS_DEV
-            "
+            --workdir "$WORKDIR" \
+            -e COMPOSER_ALLOW_SUPERUSER="$COMPOSER_ALLOW_SUPERUSER" \
+            php sh -lc "git config --global --add safe.directory /var/www && composer install -n --prefer-dist --no-scripts"
 
       - name: Run PHPUnit
+        env:
+          WORKDIR: ${{ env.WORKDIR }}
+          SYMFONY_DEPRECATIONS_HELPER: weak
         run: |
-          docker compose run --rm \
-          --user 0:0 \
-            --workdir $WORKDIR \
+          docker compose run --rm --no-deps --entrypoint "" \
+            --user 0:0 \
+            --workdir "$WORKDIR" \
             -e APP_ENV=test \
-            php sh -lc '
-              git config --global --add safe.directory /var/www &&
-              php vendor/bin/simple-phpunit --testdox
-            '
-
-###############################################################################
-# 3) Build production
-###############################################################################
-  # build:
-  #   needs: [lint, test]           # n’exécute le build qu’après succès des deux jobs
-  #   runs-on: ubuntu-latest
-
-  #   steps:
-  #     - uses: actions/checkout@v4
-
-  #     - name: Build Docker images
-  #       run: docker compose build --pull --progress plain
-
-  #     - name: Install Composer dependencies (prod)
-  #       run: |
-  #         docker compose run --rm \
-  #           --user 0:0 \
-  #           --workdir $WORKDIR \
-  #           php sh -lc "
-  #             git config --global --add safe.directory /var/www &&
-  #             composer install $COMPOSER_FLAGS_PROD
-  #           "
-
-  #     - name: Build project assets
-  #       run: |
-  #         docker compose run --rm \
-  #           --user 0:0 \
-  #           --workdir $WORKDIR \
-  #           php sh -lc '
-  #             git config --global --add safe.directory /var/www &&
-  #             chmod +x /var/www/scripts/build.sh &&
-  #             /var/www/scripts/build.sh
-  #           '
+            -e SYMFONY_DEPRECATIONS_HELPER="$SYMFONY_DEPRECATIONS_HELPER" \
+            php sh -lc "git config --global --add safe.directory /var/www && php vendor/bin/simple-phpunit --testdox"
