@@ -14,6 +14,20 @@ Consulte la vision produit complète pour comprendre le « pourquoi » et les ob
 
 ---
 
+## Documentation et diagrammes
+
+Afin de faciliter la compréhension du système et la communication avec les conseillers ou développeurs, plusieurs diagrammes UML sont maintenus dans le dossier [`docs/Diagrammes`](docs/Diagrammes).
+
+### Cas d’utilisation
+
+Ce diagramme illustre les interactions principales de l’acteur **Candidat** avec le système :
+
+![Diagramme de cas d’utilisation](docs/Diagrammes/Diagramme_use_case.png)
+
+### À venir
+D’autres diagrammes (séquences, classes, déploiement) pourront être ajoutés au fur et à mesure des features pour compléter la documentation technique et fonctionnelle.
+
+
 ## Démarrage rapide (Docker Compose)
 
 > Prérequis : Docker ≥ 24 + GNU Make (ex. Docker Desktop + WSL 2 sous Windows 11).
