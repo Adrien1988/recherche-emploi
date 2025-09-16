@@ -1,0 +1,16 @@
+{
+  "$schema": "https://raw.githubusercontent.com/captainhookphp/captainhook/main/config-schema.json",
+  "config": {
+    "bootstrap": "app/vendor/autoload.php",
+    "validate": true
+  },
+  "pre-commit": {
+    "enabled": true,
+    "actions": [
+      {
+        "action": "\\CaptainHook\\App\\Hook\\Action\\Cli",
+        "options": { "exec": "make lint" }
+      }
+    ]
+  }
+}
