@@ -24,6 +24,15 @@ Ce diagramme illustre les interactions principales de l’acteur **Candidat** av
 
 ![Diagramme de cas d’utilisation](docs/Diagrammes/Diagramme_use_case.png)
 
+
+## Diagramme de classes (domaine)
+
+Le diagramme UML des entités clés (User, Application, Reminder, CV, CvVersion, Offer, RecruiterContact) et leurs relations :
+
+![Diagramme de classes](docs/Diagrammes/Diagramme_class.png)
+
+Ce diagramme affiche les **attributs principaux** et les **cardinalités** pour clarifier l’architecture métier avant implémentation.
+
 ### À venir
 D’autres diagrammes (séquences, classes, déploiement) pourront être ajoutés au fur et à mesure des features pour compléter la documentation technique et fonctionnelle.
 
