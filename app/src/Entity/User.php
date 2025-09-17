@@ -13,7 +13,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\HasLifecycleCallbacks]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
-
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -47,7 +46,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->updatedAt = $now;
     }
 
-    /** @return int|null */
+    /**
+     * Empêche la sérialisation de hash réels en session (Symfony ≥ 7.3).
+     */
+    public function __serialize(): array
+    {
+        $data = (array) $this;
+        $data["\0" . self::class . "\0password"] = hash('crc32c', $this->password);
+
+        return $data;
+    }
+
     public function getId(): ?int
     {
         return $this->id;
@@ -65,9 +74,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    /**
-     * @return string
-     */
     public function getUserIdentifier(): string
     {
         return $this->email;
@@ -96,9 +102,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    /**
-     * @return string
-     */
     public function getPassword(): string
     {
         return $this->password;
@@ -109,17 +112,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->password = $password;
 
         return $this;
-    }
-
-    /**
-     * Empêche la sérialisation de hash réels en session (Symfony ≥ 7.3).
-     */
-    public function __serialize(): array
-    {
-        $data = (array) $this;
-        $data["\0".self::class."\0password"] = hash('crc32c', $this->password);
-
-        return $data;
     }
 
     public function eraseCredentials(): void
@@ -156,5 +148,4 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         $this->updatedAt = new \DateTimeImmutable();
     }
-
 }

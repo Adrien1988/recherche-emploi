@@ -17,3 +17,14 @@ test:
 db-reset:
 	docker compose down -v
 	docker compose up -d
+
+
+.PHONY: lint
+
+lint:
+	docker compose exec -T -w /var/www/app php php vendor/bin/ecs check --config=/var/www/ecs.php --no-interaction
+	docker compose exec -T -w /var/www/app php php vendor/bin/phpstan analyse -c /var/www/app/phpstan.dist.neon --no-progress
+
+.PHONY: lint-fix
+lint-fix:
+	docker compose exec -T -w /var/www/app php php vendor/bin/ecs check --config=/var/www/ecs.php --no-interaction --fix

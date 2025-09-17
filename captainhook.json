@@ -1,0 +1,11 @@
+{
+  "$schema": "https://raw.githubusercontent.com/captainhookphp/captainhook/main/config-schema.json",
+  "config": { "bootstrap": "app/vendor/autoload.php", "validate": true },
+  "pre-commit": {
+    "enabled": true,
+    "actions": [
+      { "action": "php app/vendor/bin/ecs check --config=/var/www/ecs.php --no-interaction" },
+      { "action": "php app/vendor/bin/phpstan analyse -c /var/www/app/phpstan.dist.neon --no-progress" }
+    ]
+  }
+}

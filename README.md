@@ -100,6 +100,9 @@ down:       # stop & remove volumes (-v)
 logs:       # logs suivis (--tail=100)
 test:       # lance la suite de tests (APP_ENV=test)
 db-reset:   # reset complet de la base puis relance
+lint:       # vérifie le style (ECS) + l'analyse statique (PHPStan)
+lint-fix:   # corrige automatiquement les erreurs ECS
+
 
 Exemples : 
 
@@ -120,6 +123,21 @@ docker compose exec -e APP_ENV=test -w /var/www/app php vendor/bin/simple-phpuni
 # ou simplement
 make test
 ```
+
+## Qualité & hooks Git
+
+- Lint PHP : EasyCodingStandard (config `ecs.php` à la racine)
+- Analyse statique : PHPStan (config `app/phpstan.dist.neon`, extensions Doctrine)
+- Hook `pre-commit` : exécute ECS puis PHPStan et **refuse** le commit si le lint échoue.
+
+Installation locale des hooks :
+docker compose exec -w /var/www php php app/vendor/bin/captainhook install -c /var/www/captainhook.json --only-enabled
+
+Commandes utiles :
+make lint
+make lint-fix
+make test
+
 
 ## Statut
 
