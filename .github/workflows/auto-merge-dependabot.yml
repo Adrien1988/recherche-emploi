@@ -2,7 +2,7 @@ name: Auto-merge Dependabot patch updates
 
 on:
   pull_request_target:
-    types: [opened, reopened, synchronize, labeled]
+    types: [opened, reopened, synchronize, labeled, edited]
 
 permissions:
   contents: write
@@ -10,7 +10,6 @@ permissions:
 
 jobs:
   automerge:
-    name: Enable auto-merge for semver patch
     if: github.actor == 'dependabot[bot]'
     runs-on: ubuntu-latest
 
@@ -21,9 +20,23 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Enable auto-merge (squash) when patch and CI is green
-        if: steps.metadata.outputs.update-type == 'version-update:semver-patch'
+      - name: Debug update type
+        run: echo "update-type=${{ steps.metadata.outputs['update-type'] }}"
+
+      - name: Enable auto-merge (squash) when semver patch
+        if: steps.metadata.outputs['update-type'] == 'version-update:semver-patch'
         uses: peter-evans/enable-pull-request-automerge@v3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          # 👇 Donne explicitement le numéro de PR
+          pull-request-number: ${{ github.event.pull_request.number }}
           merge-method: squash
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # (Optionnel) activer aussi pour MINOR
+      # - name: Enable auto-merge (squash) when semver minor
+      #   if: steps.metadata.outputs['update-type'] == 'version-update:semver-minor'
+      #   uses: peter-evans/enable-pull-request-automerge@v3
+      #   with:
+      #     pull-request-number: ${{ github.event.pull_request.number }}
+      #     merge-method: squash
+      #     token: ${{ secrets.GITHUB_TOKEN }}
