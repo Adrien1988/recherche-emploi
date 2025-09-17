@@ -1,4 +1,6 @@
 [![CI](https://github.com/Adrien1988/recherche-emploi/actions/workflows/ci.yml/badge.svg)](https://github.com/Adrien1988/recherche-emploi/actions/workflows/ci.yml)
+[![Dependencies](https://img.shields.io/badge/dependencies-automated-blue?logo=dependabot)](https://github.com/Adrien1988/recherche-emploi/security/dependabot)
+
 
 
 # Recherche d’emploi – Suivi, relances et rapports en un seul outil
