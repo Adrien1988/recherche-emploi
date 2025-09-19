@@ -21,10 +21,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      # Tag = SHA du run courant (dispatch) ou du run CI source (workflow_run)
       IMAGE_TAG: ${{ github.event_name == 'workflow_dispatch' && github.sha || github.event.workflow_run.head_sha }}
 
-      # Secrets exposés en env (vides si non définis) pour faciliter les conditions
       FLY_APP_NAME: ${{ secrets.FLY_APP_NAME }}
       FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
       SSH_HOST: ${{ secrets.SSH_HOST }}
@@ -52,6 +50,34 @@ jobs:
         run: |
           echo "image_name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
 
+      - name: Locate Dockerfile (auto)
+        id: dfile
+        shell: bash
+        run: |
+          set -euo pipefail
+          CANDIDATES=(
+            "Dockerfile"
+            "app/Dockerfile"
+            "docker/Dockerfile"
+            "docker/php/Dockerfile"
+            "infrastructure/Dockerfile"
+            "deploy/Dockerfile"
+          )
+          for p in "${CANDIDATES[@]}"; do
+            if [ -f "$p" ]; then
+              echo "path=$p" >> "$GITHUB_OUTPUT"
+              # contexte = dossier du Dockerfile (ou '.' s'il est à la racine)
+              dir="$(dirname "$p")"
+              if [ "$dir" = "." ]; then dir="."; fi
+              echo "context=$dir" >> "$GITHUB_OUTPUT"
+              echo "Found Dockerfile at: $p (context: $dir)"
+              exit 0
+            fi
+          done
+          echo "Aucun Dockerfile trouvé aux emplacements connus." 1>&2
+          echo "Crée un Dockerfile (ex: app/Dockerfile) ou adapte la liste des chemins." 1>&2
+          exit 1
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -68,7 +94,8 @@ jobs:
       - name: Build and push image
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: ${{ steps.dfile.outputs.context }}
+          file: ${{ steps.dfile.outputs.path }}
           push: true
           tags: |
             ${{ steps.img.outputs.image_name }}:${{ env.IMAGE_TAG }}
