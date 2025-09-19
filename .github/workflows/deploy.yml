@@ -17,11 +17,35 @@ concurrency:
 
 jobs:
   deploy:
+    # Ne déploie que si: déclenchement manuel OU CI verte sur main
     if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') }}
     runs-on: ubuntu-latest
+
+    # On expose les secrets dans l'env du job, puis on s'en sert dans les "if" des steps
     env:
       IMAGE_NAME: ghcr.io/${{ github.repository }}
       IMAGE_TAG: ${{ github.event_name == 'workflow_dispatch' && github.sha || github.event.workflow_run.head_sha }}
+
+      # Déploiement Fly.io (vide si non défini)
+      FLY_APP_NAME: ${{ secrets.FLY_APP_NAME }}
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      # Déploiement VPS via SSH (vides si non définis)
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      SSH_USER: ${{ secrets.SSH_USER }}
+      SSH_PORT: ${{ secrets.SSH_PORT }}
+      REMOTE_COMPOSE_PATH: ${{ secrets.REMOTE_COMPOSE_PATH }}
+
+      # Notifications (vides si non définies)
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
+      MAIL_PORT: ${{ secrets.MAIL_PORT }}
+      MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+      MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+      MAIL_FROM: ${{ secrets.MAIL_FROM }}
+      MAIL_TO: ${{ secrets.MAIL_TO }}
+      MAIL_SECURE: ${{ secrets.MAIL_SECURE }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,7 +58,7 @@ jobs:
       - name: Set up Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login GHCR
+      - name: Login to GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -52,48 +76,53 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # ---------- Déploiement Fly.io (optionnel) ----------
       - name: Deploy to Fly.io
-        if: ${{ secrets.FLY_API_TOKEN && secrets.FLY_APP_NAME }}
+        if: ${{ env.FLY_APP_NAME != '' && env.FLY_API_TOKEN != '' }}
         uses: superfly/flyctl-actions@v1
         with:
-          args: deploy --app ${{ secrets.FLY_APP_NAME }} --image ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          args: deploy --app ${{ env.FLY_APP_NAME }} --image ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
         env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          FLY_API_TOKEN: ${{ env.FLY_API_TOKEN }}
 
+      # ---------- Déploiement VPS via SSH (optionnel) ----------
       - name: Deploy to VPS via SSH
-        if: ${{ secrets.SSH_HOST && secrets.SSH_USER && secrets.REMOTE_COMPOSE_PATH }}
+        if: ${{ env.SSH_HOST != '' && env.SSH_USER != '' && env.REMOTE_COMPOSE_PATH != '' }}
         env:
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-          SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_PORT: ${{ secrets.SSH_PORT || 22 }}
-          REMOTE_COMPOSE_PATH: ${{ secrets.REMOTE_COMPOSE_PATH }}
+          SSH_HOST: ${{ env.SSH_HOST }}
+          SSH_USER: ${{ env.SSH_USER }}
+          SSH_PORT: ${{ env.SSH_PORT || 22 }}
+          REMOTE_COMPOSE_PATH: ${{ env.REMOTE_COMPOSE_PATH }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
           IMAGE_TAG: ${{ env.IMAGE_TAG }}
         run: |
-          ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "docker login ghcr.io -u $GITHUB_ACTOR -p $GITHUB_TOKEN"
-          ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "docker pull $IMAGE_NAME:$IMAGE_TAG"
-          ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "IMAGE=$IMAGE_NAME:$IMAGE_TAG docker compose -f $REMOTE_COMPOSE_PATH pull"
-          ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "IMAGE=$IMAGE_NAME:$IMAGE_TAG docker compose -f $REMOTE_COMPOSE_PATH up -d"
-          ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "docker image prune -f"
+          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "docker login ghcr.io -u $GITHUB_ACTOR -p $GITHUB_TOKEN"
+          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "docker pull $IMAGE_NAME:$IMAGE_TAG"
+          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "IMAGE=$IMAGE_NAME:$IMAGE_TAG docker compose -f $REMOTE_COMPOSE_PATH pull"
+          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "IMAGE=$IMAGE_NAME:$IMAGE_TAG docker compose -f $REMOTE_COMPOSE_PATH up -d"
+          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "docker image prune -f"
 
+      # ---------- Notifications en cas d'échec (optionnelles) ----------
       - name: Notify failure to Slack
-        if: failure() && secrets.SLACK_WEBHOOK_URL
+        if: ${{ failure() && env.SLACK_WEBHOOK_URL != '' }}
         run: |
-          curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"CD failed on $GITHUB_REPOSITORY@$IMAGE_TAG — run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID\"}" ${{ secrets.SLACK_WEBHOOK_URL }}
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"CD failed on $GITHUB_REPOSITORY@$IMAGE_TAG — run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID\"}" \
+            "${{ env.SLACK_WEBHOOK_URL }}"
 
       - name: Notify failure by email
-        if: failure() && secrets.MAIL_SERVER && secrets.MAIL_TO && secrets.MAIL_FROM && secrets.MAIL_USERNAME && secrets.MAIL_PASSWORD
-        uses: dawidd6/action-send-mail@v6
+        if: ${{ failure() && env.MAIL_SERVER != '' && env.MAIL_FROM != '' && env.MAIL_TO != '' && env.MAIL_USERNAME != '' && env.MAIL_PASSWORD != '' }}
+        uses: dawidd6/action-send-mail@v3
         with:
-          server_address: ${{ secrets.MAIL_SERVER }}
-          server_port: ${{ secrets.MAIL_PORT || 587 }}
-          username: ${{ secrets.MAIL_USERNAME }}
-          password: ${{ secrets.MAIL_PASSWORD }}
+          server_address: ${{ env.MAIL_SERVER }}
+          server_port: ${{ env.MAIL_PORT || 587 }}
+          username: ${{ env.MAIL_USERNAME }}
+          password: ${{ env.MAIL_PASSWORD }}
           subject: "CD failed: ${{ github.repository }} @ ${{ env.IMAGE_TAG }}"
-          to: ${{ secrets.MAIL_TO }}
-          from: ${{ secrets.MAIL_FROM }}
-          secure: ${{ secrets.MAIL_SECURE || 'starttls' }}
+          to: ${{ env.MAIL_TO }}
+          from: ${{ env.MAIL_FROM }}
+          secure: ${{ env.MAIL_SECURE || 'starttls' }}
           body: |
             CD failed.
             Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
