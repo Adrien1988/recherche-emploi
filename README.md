@@ -1,4 +1,5 @@
 [![CI](https://github.com/Adrien1988/recherche-emploi/actions/workflows/ci.yml/badge.svg)](https://github.com/Adrien1988/recherche-emploi/actions/workflows/ci.yml)
+[![CD](https://github.com/Adrien1988/recherche-emploi/actions/workflows/deploy.yml/badge.svg?branch=main)](https://github.com/Adrien1988/recherche-emploi/actions/workflows/deploy.yml)
 [![Dependencies](https://img.shields.io/badge/dependencies-automated-blue?logo=dependabot)](https://github.com/Adrien1988/recherche-emploi/security/dependabot)
 
 
