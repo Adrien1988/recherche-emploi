@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "59087b523653e4925d6cc9f545547ff7",
+    "content-hash": "9f53cca2a7e41b4bf85ee09f22991b43",
     "packages": [
         {
             "name": "doctrine/collections",
@@ -6108,16 +6108,16 @@
         },
         {
             "name": "symplify/easy-coding-standard",
-            "version": "12.6.2",
+            "version": "13.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/easy-coding-standard/easy-coding-standard.git",
-                "reference": "7a6798aa424f0ecafb1542b6f5207c5a99704d3d"
+                "reference": "24708c6673871e342245c692e1bb304f119ffc58"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/easy-coding-standard/easy-coding-standard/zipball/7a6798aa424f0ecafb1542b6f5207c5a99704d3d",
-                "reference": "7a6798aa424f0ecafb1542b6f5207c5a99704d3d",
+                "url": "https://api.github.com/repos/easy-coding-standard/easy-coding-standard/zipball/24708c6673871e342245c692e1bb304f119ffc58",
+                "reference": "24708c6673871e342245c692e1bb304f119ffc58",
                 "shasum": ""
             },
             "require": {
@@ -6153,7 +6153,7 @@
             ],
             "support": {
                 "issues": "https://github.com/easy-coding-standard/easy-coding-standard/issues",
-                "source": "https://github.com/easy-coding-standard/easy-coding-standard/tree/12.6.2"
+                "source": "https://github.com/easy-coding-standard/easy-coding-standard/tree/13.0.0"
             },
             "funding": [
                 {
@@ -6165,7 +6165,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-10-29T08:51:50+00:00"
+            "time": "2025-11-06T14:47:06+00:00"
         },
         {
             "name": "twig/extra-bundle",
